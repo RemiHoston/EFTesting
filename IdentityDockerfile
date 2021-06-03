@@ -1,0 +1,31 @@
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS base
+WORKDIR /app
+EXPOSE 7001
+EXPOSE 7000
+
+
+
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
+COPY _PlayList.Models/. /_PlayList.Models/
+COPY _PlayList.Service/. /_PlayList.Service/
+COPY _PlayList.DataAccess/. /_PlayList.DataAccess/ 
+COPY PlayList.IdentityServer/. /src/ 
+WORKDIR /src 
+RUN ["dotnet","restore"]
+RUN ["dotnet","build","-o","/app/build"]
+
+FROM build AS publish
+RUN ["dotnet","publish","-o","/app/publish"]
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+
+COPY InitDataBase.sh /
+# init datatable
+# RUN ["dotnet", "tool" ,"install" ,"--global" ,"dotnet-ef"]
+
+RUN ["chmod", "+x", "/InitDataBase.sh"]
+CMD ["/bin/bash", "/InitDataBase.sh"]
+
+# ENTRYPOINT ["dotnet","PlayList.IdentityServer.dll"]

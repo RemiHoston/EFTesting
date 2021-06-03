@@ -1,0 +1,21 @@
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS base
+WORKDIR /app
+EXPOSE 8001
+EXPOSE 8000
+
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
+COPY _PlayList.Models/. /_PlayList.Models/
+COPY _PlayList.Service/. /_PlayList.Service/
+COPY _PlayList.DataAccess/. /_PlayList.DataAccess/
+COPY PlayList.Managerment.WebApi/. /src/ 
+WORKDIR /src
+RUN ["dotnet","restore"]
+RUN ["dotnet","build","-o","/app/build"]
+
+FROM build AS publish
+RUN ["dotnet","publish","-o","/app/publish"]
+
+FROM base AS final 
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet","PlayList.Managerment.WebApi.dll"]
